@@ -14,29 +14,6 @@ class GAS_Discriminator(object):
     def __init__(self, ph):
         self.network = None
         self.logit = self.build(ph).outputs
-
-    def depthwise_separable_conv(self, inputs, num_pwc_filters, width_multiplier, sc, downsample=False):
-        """ 
-            Helper function to build the depth-wise separable convolution layer.
-        """
-        num_pwc_filters = round(num_pwc_filters * width_multiplier)
-        _stride = 2 if downsample else 1
-        depthwise_conv = slim.separable_convolution2d(inputs, num_outputs=None, stride=_stride, depth_multiplier=1, kernel_size=[3, 3], scope=sc+'/depthwise_conv')
-        bn = slim.batch_norm(depthwise_conv, scope=sc+'/dw_batch_norm')
-        pointwise_conv = slim.convolution2d(bn, num_pwc_filters, kernel_size=[1, 1], scope=sc+'/pointwise_conv')
-        bn = slim.batch_norm(pointwise_conv, scope=sc+'/pw_batch_norm')
-        return bn
-
-    def _inception_conv(self, inputs, num_pwc_filters, width_multiplier, sc, downsample=False):
-        """
-            alpha is the shrink scale
-        """
-        branch1 = tl.layers.Conv2d(inputs, n_filter = num_pwc_filters // 2, filter_size=(1, 1), strides=(1, 1), name = sc + '_inception_branch1')
-        branch2 = tl.layers.Conv2d(inputs, n_filter = num_pwc_filters // 2, filter_size=(1, 1), strides=(1, 1), name = sc + '_inception_branch2')
-        branch2 = self.depthwise_separable_conv(branch2.outputs, num_pwc_filters // 2, width_multiplier, sc, downsample)
-        branch2 = tl.layers.InputLayer(branch2, name = sc + 'inception_aligned_layer')    
-        network = tl.layers.ConcatLayer([branch1, branch2], concat_dim = -1, name = sc + '_inception_concat')
-        return network
         
     def add_layer(self, network, n_filter, with_bn = True, width_multiplier = 1, name = "layer"):
         """
