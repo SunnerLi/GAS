@@ -34,6 +34,48 @@ class GAS(object):
         network = tl.layers.ConcatLayer([branch1, branch2], concat_dim = -1, name = sc + '_inception_concat')
         return network
 
+class Discriminator_Large(GAS):
+    """
+        The small discriminator of Generative Auxiliary Strategy
+
+        n_filter = 32: 713MB
+        n_filter = 16: 457MB
+    """
+    
+    def __init__(self):
+        pass
+
+    def add_layer(self, network, n_filter, with_bn = True, width_multiplier = 1, name = "layer"):
+        """
+            From the normal block of DCGAN
+        """
+        network = tl.layers.Conv2d(network, n_filter=n_filter, name = name + 'conv2d')
+        if with_bn == True:
+            network = tl.layers.BatchNormLayer(network, name = name +'batchnorm_layer')
+        network = tf.nn.relu(network.outputs)
+        network = tl.layers.InputLayer(network, name = name + 'aligned_layer_2')
+        network = tl.layers.MaxPool2d(network, name = name + 'maxpool')
+        return network
+
+    def build(self, ph, base_filter=32, reuse = False):
+        """
+            Get network
+        """
+        with tf.variable_scope('discriminator', reuse = reuse):
+            tl.layers.set_name_reuse(reuse)
+            if type(ph) == tf.Tensor:
+                self.network = tl.layers.InputLayer(ph)
+            else:
+                self.network = ph
+            self.network = self.add_layer(self.network, n_filter = base_filter, with_bn = False, name = '1')
+            self.network = self.add_layer(self.network, n_filter = base_filter * (2 ** 1), name = '2')
+            self.network = self.add_layer(self.network, n_filter = base_filter * (2 ** 2), name = '3')
+            self.network = self.add_layer(self.network, n_filter = base_filter * (2 ** 3), name = '4')
+            self.network = tl.layers.FlattenLayer(self.network)
+            self.network = tl.layers.DenseLayer(self.network, n_units = 1)
+            self.logits = self.network.outputs
+            return self.network
+
 class Discriminator(GAS):
     """
         The small discriminator of Generative Auxiliary Strategy
@@ -42,10 +84,8 @@ class Discriminator(GAS):
         n_filter = 16: 457MB
     """
     
-    def __init__(self, ph):
-        self.network = None
-        self.logit = None
-        self.ph = ph
+    def __init__(self):
+        pass
 
     def add_layer(self, network, n_filter, with_bn = True, width_multiplier = 1, name = "layer"):
         """
@@ -59,16 +99,16 @@ class Discriminator(GAS):
         network = tl.layers.MaxPool2d(network, name = name + 'maxpool')
         return network
 
-    def build(self, base_filter=16, reuse = False):
+    def build(self, ph, base_filter=32, reuse = False):
         """
             Get network
         """
         with tf.variable_scope('discriminator', reuse = reuse):
             tl.layers.set_name_reuse(reuse)
-            if type(self.ph) == tf.Tensor:
-                self.network = tl.layers.InputLayer(self.ph)
+            if type(ph) == tf.Tensor:
+                self.network = tl.layers.InputLayer(ph)
             else:
-                self.network = self.ph
+                self.network = ph
             self.network = self.add_layer(self.network, n_filter = base_filter, with_bn = False, name = '1')
             self.network = self.add_layer(self.network, n_filter = base_filter * (2 ** 1), name = '2')
             self.network = self.add_layer(self.network, n_filter = base_filter * (2 ** 2), name = '3')
@@ -85,9 +125,8 @@ class Discriminator_Dense(GAS):
         n_filter = 32: 713MB
         n_filter = 16: 457MB
     """
-    def __init__(self, ph):
-        self.network = None
-        self.logit = self.build(ph).outputs
+    def __init__(self):
+        pass
 
     def add_layer(self, name, l, growthRate = 16, width_multiplier = 1):
         shape = l.outputs.get_shape().as_list()
@@ -128,8 +167,12 @@ class Discriminator_Dense(GAS):
         """
             Get network
         """
-        with tf.variable_scope('discriminator'):
-            self.network = tl.layers.InputLayer(ph)
+        with tf.variable_scope('discriminator', reuse = reuse):
+            tl.layers.set_name_reuse(reuse)
+            if type(ph) == tf.Tensor:
+                self.network = tl.layers.InputLayer(ph)
+            else:
+                self.network = ph
             self.network = self.inception_conv2d(self.network, base_filter, 1, sc = '1')
             self.network = self.add_block(self.network, n_filter = base_filter, name = '2')
             self.network = self.add_block(self.network, n_filter = base_filter, name = '3')
@@ -142,15 +185,16 @@ if __name__ == '__main__':
     with tf.Graph().as_default():
         with tf.device('/device:GPU:0'):
             # Define network
-            ph = tf.placeholder(tf.float32, shape=[None, 224, 224, 3])
-            model = Discriminator(ph)
-            model.build()
+            ph = tf.placeholder(tf.float32, shape=[None, 28, 28, 1])
+            model = Discriminator()
+            model.build(ph)
             config = tf.ConfigProto()
             config.gpu_options.per_process_gpu_memory_fraction = 0.1
             config.gpu_options.allow_growth = True
             with tf.Session(config=config) as sess:
                 sess.run(tf.global_variables_initializer())
+                print(type(model))
                 while True:
                     sess.run(model.logits, feed_dict={
-                        model.ph: np.random.random([32, 224, 224, 3])
+                        ph: np.random.random([32, 28, 28, 1])
                     })
