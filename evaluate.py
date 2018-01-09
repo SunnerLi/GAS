@@ -6,8 +6,8 @@ import numpy as np
 import pickle
 
 # Training constant
-evaluate_period = 100
-epochs = 1000
+evaluate_period = 250
+epochs = 1500
 batch_size = 32
 
 # Loss file
@@ -39,12 +39,19 @@ if __name__ == '__main__':
                 # Train and evaluate
                 sess.run(tf.global_variables_initializer())
                 for i in range(epochs):
-                    feed_dict = {
-                        z_placeholder: generateNoice(batch_size, 100),
+                    sess.run([model.dis_train_op], feed_dict={
+                        z_placeholder: generateNoice(batch_size, 100).astype(np.float32),
                         img_placeholder: handler.getBatchImage()
-                    }
-                    sess.run([model.dis_train_op, model.gen_train_op], feed_dict=feed_dict)
+                    })
+                    for j in range(4):  # Should update generator to avoid mode collapse
+                        sess.run([model.gen_train_op], feed_dict={
+                            z_placeholder: generateNoice(batch_size, 100).astype(np.float32),
+                        })
                     if i % evaluate_period == 0:
+                        feed_dict = {
+                            z_placeholder: generateNoice(batch_size, 100).astype(np.float32),
+                            img_placeholder: handler.getBatchImage()
+                        }
                         gen_loss, dis_loss = sess.run([model.gen_loss, model.dis_loss], feed_dict=feed_dict)
                         gen_loss_list.append(gen_loss)
                         dis_loss_list.append(dis_loss)

@@ -71,9 +71,8 @@ class Discriminator_Large(GAS):
             self.network = self.add_layer(self.network, n_filter = base_filter * (2 ** 1), name = '2')
             self.network = self.add_layer(self.network, n_filter = base_filter * (2 ** 2), name = '3')
             self.network = self.add_layer(self.network, n_filter = base_filter * (2 ** 3), name = '4')
-            self.network = tl.layers.FlattenLayer(self.network)
-            self.network = tl.layers.DenseLayer(self.network, n_units = 1)
-            self.logits = self.network.outputs
+            self.logits = tl.layers.FlattenLayer(self.network)
+            self.network = tl.layers.DenseLayer(self.logits, n_units = 1, act = tf.nn.sigmoid)
             return self.network
 
 class Discriminator(GAS):
@@ -103,6 +102,7 @@ class Discriminator(GAS):
         """
             Get network
         """
+        
         with tf.variable_scope('discriminator', reuse = reuse):
             tl.layers.set_name_reuse(reuse)
             if type(ph) == tf.Tensor:
