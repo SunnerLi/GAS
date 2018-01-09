@@ -1,4 +1,4 @@
-from module import Discriminator, Discriminator_Dense, Discriminator_Large
+from module import Discriminator_dense, Discriminator_large, Discriminator_small, Discriminator_inception
 import tensorlayer as tl
 import tensorflow as tf
 import numpy as np
@@ -49,10 +49,6 @@ class LSGAN(object):
         fake_logits = self.discriminator.build(self.gen_imgs, reuse=True).outputs
 
         # Define loss
-        # true_logits = tf.reduce_mean(true_logits)
-        # fake_logits = tf.reduce_mean(fake_logits)
-        # self.dis_loss = tf.square(true_logits - 1) + tf.square(fake_logits)
-        # self.gen_loss = tf.square(fake_logits - 1)
         self.dis_loss = tf.reduce_sum(tf.square(true_logits - 1) + tf.square(fake_logits)) / 2
         self.gen_loss = tf.reduce_sum(tf.square(fake_logits - 1)) / 2
 
@@ -72,17 +68,32 @@ class LSGAN(object):
 class LSGAN_large(LSGAN):
     def __init__(self):
         self.generator = Generator()
-        self.discriminator = Discriminator_Large()
+        self.discriminator = Discriminator_large()
 
-class LSGAN_origin(LSGAN):
+class LSGAN_small(LSGAN):
     def __init__(self):
         self.generator = Generator()
-        self.discriminator = Discriminator()
+        self.discriminator = Discriminator_small()
+
+class LSGAN_inception_32(LSGAN):
+    def __init__(self):
+        self.generator = Generator()
+        self.discriminator = Discriminator_inception(base_filter = 32)
 
 class LSGAN_dense(LSGAN):
     def __init__(self):
         self.generator = Generator()
-        self.discriminator = Discriminator_Dense()
+        self.discriminator = Discriminator_dense()
+
+class LSGAN_inception_16(LSGAN):
+    def __init__(self):
+        self.generator = Generator()
+        self.discriminator = Discriminator_inception(base_filter = 16)
+
+class LSGAN_inception_8(LSGAN):
+    def __init__(self):
+        self.generator = Generator()
+        self.discriminator = Discriminator_inception(base_filter = 8)
 
 if __name__ == '__main__':
     with tf.Graph().as_default():
