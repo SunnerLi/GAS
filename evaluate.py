@@ -6,8 +6,8 @@ import numpy as np
 import pickle
 
 # Training constant
-evaluate_period = 10
-epochs = 20
+evaluate_period = 250
+epochs = 1000
 batch_size = 32
 
 def train(model, gen_loss_file_name, dis_loss_file_name, img_save_folder):
