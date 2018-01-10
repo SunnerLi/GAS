@@ -6,15 +6,15 @@ import numpy as np
 import pickle
 
 # Training constant
-evaluate_period = 250
-epochs = 1000
+evaluate_period = 200
+epochs = 2000
 batch_size = 32
 
 def train(model, gen_loss_file_name, dis_loss_file_name, img_save_folder):
     # Define image handler & object
     handler = ImageHandler(dataset_name = 'mnist', resize_length = 28)
     config = tf.ConfigProto()
-    config.gpu_options.per_process_gpu_memory_fraction = 0.5
+    config.gpu_options.per_process_gpu_memory_fraction = 0.1
     config.gpu_options.allow_growth = True
     gen_loss_list = []
     dis_loss_list = []
