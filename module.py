@@ -50,9 +50,9 @@ class Discriminator_large(object):
             self.network = self.add_layer(self.network, n_filter = self.base_filter * (2 ** 1), name = '2')
             self.network = self.add_layer(self.network, n_filter = self.base_filter * (2 ** 2), name = '3')
             self.network = self.add_layer(self.network, n_filter = self.base_filter * (2 ** 3), name = '4')
-            self.logits = tl.layers.FlattenLayer(self.network)
-            self.network = tl.layers.DenseLayer(self.logits, n_units = 1, act = tf.nn.sigmoid)
-            return self.network
+            self.network= tl.layers.FlattenLayer(self.network)
+            self.logits = tl.layers.DenseLayer(self.network, n_units = 1, act = tf.nn.sigmoid)
+            return self.logits
 
 class Discriminator_small(object):
     """
@@ -92,9 +92,9 @@ class Discriminator_small(object):
             self.network = self.add_layer(self.network, n_filter = self.base_filter * (2 ** 1), name = '2')
             self.network = self.add_layer(self.network, n_filter = self.base_filter * (2 ** 2), name = '3')
             self.network = self.add_layer(self.network, n_filter = self.base_filter * (2 ** 3), name = '4')
-            self.logits = tl.layers.FlattenLayer(self.network)
-            self.network = tl.layers.DenseLayer(self.logits, n_units = 1, act = tf.nn.sigmoid)
-            return self.network
+            self.network = tl.layers.FlattenLayer(self.network)
+            self.logits = tl.layers.DenseLayer(self.network, n_units = 1, act = tf.nn.sigmoid)
+            return self.logits
 
 class Discriminator_inception(object):
     """
@@ -134,9 +134,9 @@ class Discriminator_inception(object):
             self.network = self.add_layer(self.network, n_filter = self.base_filter * (2 ** 1), name = '2')
             self.network = self.add_layer(self.network, n_filter = self.base_filter * (2 ** 2), name = '3')
             self.network = self.add_layer(self.network, n_filter = self.base_filter * (2 ** 3), name = '4')
-            self.logits = tl.layers.FlattenLayer(self.network)
-            self.network = tl.layers.DenseLayer(self.logits, n_units = 1, act = tf.nn.sigmoid)
-            return self.network
+            self.network = tl.layers.FlattenLayer(self.network)
+            self.logits = tl.layers.DenseLayer(self.network, n_units = 1, act = tf.nn.sigmoid)
+            return self.logits
 
 class Discriminator_dense(object):
     """
@@ -198,23 +198,25 @@ class Discriminator_dense(object):
             self.network = self.add_block(self.network, n_filter = base_filter, name = '3')
             self.network = self.add_block(self.network, n_filter = base_filter, name = '4')
             self.network = tl.layers.FlattenLayer(self.network)
-            self.network = tl.layers.DenseLayer(self.network, n_units = 1, act = tf.nn.sigmoid)
-            return self.network
+            self.logits = tl.layers.DenseLayer(self.network, n_units = 1, act = tf.nn.sigmoid)
+            return self.logits
 
 if __name__ == '__main__':
+    """
+        The code to test the size of discriminator
+    """
     with tf.Graph().as_default():
         with tf.device('/device:GPU:0'):
             # Define network
             ph = tf.placeholder(tf.float32, shape=[None, 28, 28, 1])
-            model = Discriminator()
+            model = Discriminator_inception(base_filter=8)
             model.build(ph)
             config = tf.ConfigProto()
             config.gpu_options.per_process_gpu_memory_fraction = 0.1
             config.gpu_options.allow_growth = True
             with tf.Session(config=config) as sess:
                 sess.run(tf.global_variables_initializer())
-                print(type(model))
                 while True:
-                    sess.run(model.logits, feed_dict={
+                    sess.run(model.logits.outputs, feed_dict={
                         ph: np.random.random([32, 28, 28, 1])
                     })

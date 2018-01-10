@@ -13,6 +13,9 @@ class Generator(object):
         return tf.add(tf.matmul(x, W), b)
 
     def build(self, ph, name = "generator"):
+        """
+            The structure of generator is as the same as the original LSGAN
+        """
         initializer = tf.truncated_normal_initializer(stddev=0.02)
         with tf.variable_scope(name):
             # conv1
@@ -94,23 +97,3 @@ class LSGAN_inception_8(LSGAN):
     def __init__(self):
         self.generator = Generator()
         self.discriminator = Discriminator_inception(base_filter = 8)
-
-if __name__ == '__main__':
-    with tf.Graph().as_default():
-        with tf.device('/device:GPU:0'):
-            # Define network
-            z_ph = tf.placeholder(tf.float32, shape=[None, 100])
-            img_ph = tf.placeholder(tf.float32, shape=[None, 28, 28, 1])
-            model = LSGAN_origin()
-            model.build(z_ph, img_ph)
-            config = tf.ConfigProto()
-            config.gpu_options.per_process_gpu_memory_fraction = 0.1
-            config.gpu_options.allow_growth = True
-            with tf.Session(config=config) as sess:
-                sess.run(tf.global_variables_initializer())
-                print(type(model.discriminator))
-                while True:
-                    sess.run(model.gen_train_op, feed_dict={
-                        z_ph: np.random.random([32, 100]),
-                        img_ph: np.random.random([32, 28, 28, 1])
-                    })
