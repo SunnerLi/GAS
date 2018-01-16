@@ -56,8 +56,8 @@ class Discriminator(nn.Module):
             x = self.inception_block_forward(self.inc_conv_br1_2, self.inc_conv_br2_shrink_2, self.inc_conv_br2_2, x)
             x = self.inception_block_forward(self.inc_conv_br1_3, self.inc_conv_br2_shrink_3, self.inc_conv_br2_3, x)
             x = self.inception_block_forward(self.inc_conv_br1_4, self.inc_conv_br2_shrink_4, self.inc_conv_br2_4, x)
-        x = x.view(self.batch_size, -1)
-        return F.sigmoid(self.fc(x))
+        x = x.view(-1, 256)
+        return self.fc(x)
 
 if __name__ == '__main__':
     net = Discriminator(batch_size = 32, base_filter = 32, adopt_gas = False)
